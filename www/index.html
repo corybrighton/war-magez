@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>MAGE WARZ</title>
+</head>
+
+<body>
+	<h1>Welcome <span id="user"></span> to Mage Warz</h1>
+
+	<p>
+		Mage Wars is a D&D inspired api that gives you a chance to build up your unique book of spells.
+	</p>
+	<p>
+		This is a trainer project designed to help developers learn the specifics around HTTP Requests and modern day
+		frameworks. The server has been designed to accept request from any port and has specifically been built to serve
+		static files from the www folder. It is recommended for this purpose to build out a project from the wwwsrc folder
+		that will output the build to the www folder. The server utilizes cookie based authentication. All requests outside
+		of GET must come from an authenticated user.
+	</p>
+
+	<div id="auth-forms">
+
+		<div id="login-form">
+			<form onsubmit="submitForm(event, 'login')">
+				<h4>LOGIN</h4>
+				<input type="text" hidden readonly name="username" style="display: none">
+				<input type="text" name="email" placeholder="Email" required>
+				<input type="password" name="password" placeholder="Password" required>
+				<button type="submit">Submit</button>
+			</form>
+		</div>
+
+		<div id="register-form" style="display: none">
+			<form onsubmit="submitForm(event, 'register')">
+				<h4>REGISTER</h4>
+				<input type="text" name="username" placeholder="Username" required>
+				<input type="text" name="email" placeholder="Email" required>
+				<input type="password" name="password" placeholder="Password" required>
+				<button type="submit">Submit</button>
+			</form>
+		</div>
+
+		<button id="form-toggle" onclick="toggleForm(event)">Click to Register</button>
+	</div>
+
+	<div id="spellbooks-container" style="display:none">
+		<button onclick="logout()">Logout</button>
+		<button onclick="toggleSpellbookForm(event)">Show Create Spellbook Form</button>
+		<div id="spellbook-form" style="display:none">
+			<form onsubmit="createSpellbook(event)">
+				<input type="text" name="spellbookname" required>
+				<button type="submit">Create Spellbook</button>
+			</form>
+		</div>
+		<div id="spellbooks"></div>
+	</div>
+
+
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+<script>
+	var loginForm = document.getElementById('login-form')
+	var registerForm = document.getElementById('register-form')
+	var authForms = document.getElementById('auth-forms')
+	var userElem = document.getElementById('user')
+	var spellbooksContainer = document.getElementById('spellbooks-container')
+	var spellbookForm = document.getElementById('spellbook-form')
+	var spellbooks = document.getElementById('spellbooks')
+
+	var showLogin = true
+	var auth = axios.create({
+		baseURL: '/auth',
+		withCredentials: true
+	})
+
+	var api = axios.create({
+		baseURL: '/api',
+		withCredentials: true
+	})
+
+	auth.get('authenticate')
+		.then(showUser)
+
+	function submitForm(e, m) {
+		e.preventDefault()
+		auth.post(m, {
+			name: e.target.username.value,
+			email: e.target.email.value,
+			password: e.target.password.value
+		})
+			.then(showUser)
+			.catch(alert)
+	}
+	function toggleForm(e) {
+		showLogin = !showLogin
+		if (showLogin) {
+			registerForm.style.display = "none"
+			loginForm.style.display = "block"
+			e.target.textContent = "Click to Register"
+		} else {
+			loginForm.style.display = "none"
+			registerForm.style.display = "block"
+			e.target.textContent = "Click to Login"
+		}
+	}
+
+	function showUser(res) {
+		if (res.data.name || res.data.email) {
+			userElem.textContent = res.data.name || res.data.email + ','
+			authForms.style.display = 'none'
+			spellbooksContainer.style.display = 'block'
+			drawSpellbooks()
+		}
+	}
+
+	var showingSpellbookForm = true
+	function toggleSpellbookForm(e) {
+		showingSpellbookForm = !showingSpellbookForm
+		if (showingSpellbookForm) {
+			spellbookForm.style.display = "none"
+			e.target.textContent = "Show Create Spellbook Form"
+		} else {
+			spellbookForm.style.display = "block"
+			e.target.textContent = "Hide Create Spellbook Form"
+		}
+	}
+
+	function createSpellbook(e) {
+		e.preventDefault()
+		api.post('spellbooks', { name: e.target.spellbookname.value }).then(drawSpellbooks)
+		e.target.reset()
+		toggleSpellbookForm()
+	}
+
+	function drawSpellbooks() {
+		let t = ''
+		api.get('spellbooks').then(res => {
+			res.data.forEach(book => { t += `<h5>${book.name} - ${book.spells.length} spells</h5>` })
+			spellbooks.innerHTML = t
+		})
+	}
+
+
+	function logout(){
+		auth.delete('logout').then(r => {
+			window.location.reload()
+		})
+	}
+</script>
+
+
+</html>
