@@ -35,9 +35,14 @@ class Spell {
 	level: number
 }
 
-SPELLBOOK = {
-	userId: string
-	spells: Array<Spell>
+class Note {
+ 	body: string
+}
+
+class Spellbook {
+	creatorId: string // auto assigned
+	spells: Array<Spell> // editable field of spell ids
+	notes: Array<Note> // editable field full objects
 }
 
 ```
