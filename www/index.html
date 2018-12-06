@@ -135,20 +135,34 @@
 		e.target.reset()
 		toggleSpellbookForm()
 	}
-
+	var books = []
 	function drawSpellbooks() {
 		let t = ''
 		api.get('spellbooks').then(res => {
-			res.data.forEach(book => { t += `<h5>${book.name} - ${book.spells.length} spells</h5>` })
+			books = res.data
+			res.data.forEach(book => { t += `<h5 onclick="addTestSpell('${book._id}')">${book.name} - ${book.spells.length} spells</h5>` })
 			spellbooks.innerHTML = t
 		})
 	}
 
 
-	function logout(){
+	function logout() {
 		auth.delete('logout').then(r => {
 			window.location.reload()
 		})
+	}
+
+	function addTestSpell(id) {
+		var book = books.find(b => b._id == id)
+		if (book.spells.length > 3) {
+			book.spells.splice(1, 4)
+		}
+		if (book.spells.length == 0) {
+			book.spells.push('5bce91f95b7768e7920184d6')
+		} else {
+			book.spells.push('5bce91f95b7768e7920184da')
+		}
+		api.put('spellbooks/' + id, book).then(drawSpellbooks)
 	}
 </script>
 
